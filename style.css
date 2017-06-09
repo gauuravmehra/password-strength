@@ -1,0 +1,22 @@
+.pwd-block {
+  margin-top: 5%; 
+}
+
+.pwd {
+  padding: 5px;
+  width: 100%;
+}
+
+a {
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.pwd-strength-indicator {
+  height: 15px;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 5px;
+  background-color: #ddd;
+  transition: background-color 1000ms linear;
+}
