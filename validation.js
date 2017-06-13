@@ -1,44 +1,77 @@
-function Validation ($el, val) {
+function Validation ($el) {
 	this.el = $el;
-	this.val = val;
-}
+	this.init();
+};
 
 Validation.prototype = {
 
-	MinLength: function () {
-		if (this.val.length >= 8) {
+	init: function () {
+		var self = this;
+
+		this.el.on('keyup', function (e) {
+			var elm = $(this),
+				val = elm.val();
+			if (val !== '') {
+				self.validate(val, elm);
+			}
+		});
+
+		this.el.parents('.pwd-block').find('.show-pwd').on('click', function () {
+			if ($(this).parents('.pwd-block').find('.pwd').prop('type') === 'password') {
+				$(this).parents('.pwd-block').find('.pwd').prop('type', 'text');
+				$(this).text('Hide Password');
+			} else {
+				$(this).parents('.pwd-block').find('.pwd').prop('type', 'password');
+				$(this).text('Show Password');
+			}
+		});
+
+		this.el.on('focusin', function () {
+			$(this).parents('.pwd-block').find('.pwd-strength-indicator').removeClass('hidden');
+		});
+
+		this.el.on('focusout', function () {
+			if ($(this).val() === '') {
+				$(this).parents('.pwd-block').find('.pwd-strength-indicator').addClass('hidden');
+				$(this).parents('.pwd-block').find('.pwd-strength-indicator .progress-bar').css({'background-color': '#ddd'}).text('0%');
+			}
+		});
+	},
+
+	MinLength: function (val) {
+		if (val.length >= 8) {
 			return true;
 		} else {
 			return false;
 		}
 	},
 
-	checkUpperCase: function () {
+	checkUpperCase: function (val) {
 		var upperCase= new RegExp('[A-Z]');
-		return upperCase.test(this.val);
+		return upperCase.test(val);
 	},
 
-	checkLowerCase: function () {
+	checkLowerCase: function (val) {
 		var lowerCase= new RegExp('[a-z]');
-		return lowerCase.test(this.val);
+		return lowerCase.test(val);
 	},
 
-	checkNumbers: function () {
+	checkNumbers: function (val) {
 		var numbers = new RegExp('[0-9]');
-		return numbers.test(this.val);
+		return numbers.test(val);
 	},
 
-	checkSymbols: function () {
+	checkSymbols: function (val) {
 		var special = /[ !@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
-		return special.test(this.val);
+		return special.test(val);
 	},
 
-	checkSequentialChars: function () {
+	checkSequentialChars: function (val) {
 		var pattern = /^([a-z])\1+$/;
-		return pattern.test(this.val);
+		return pattern.test(val);
 	},
 
-	validate: function () {
+	validate: function (val, el) {
 		var score = 0;
 		var obj = {
 			upperCase: false,
@@ -47,35 +80,35 @@ Validation.prototype = {
 			numbers: false
 		};
 
-		if (this.MinLength()) {
+		if (this.MinLength(val)) {
 			score++;
 
-			if (this.checkUpperCase()) {
+			if (this.checkUpperCase(val)) {
 				obj.upperCase = true;
 				score++;
 			}
-			if (this.checkLowerCase()) {
+			if (this.checkLowerCase(val)) {
 				obj.lowerCase = true;
 				score++;
 			}
-			if (this.checkNumbers()) {
+			if (this.checkNumbers(val)) {
 				obj.special = true;
 				score++;
 			}
-			if (this.checkSymbols()) {
+			if (this.checkSymbols(val)) {
 				obj.numbers = true;
 				score++;
 			}
-			if (this.checkSequentialChars()) {
+			if (this.checkSequentialChars(val)) {
 				score--;
 			} else {
 				score++;
 			}
 		}
-		this.changeBar(score, obj);
+		this.changeBar(score, obj, el);
 	},
 
-	changeBar: function (score, o) {
+	changeBar: function (score, o, el) {
 		var color, msg;
 
 		switch (score) {
@@ -92,13 +125,13 @@ Validation.prototype = {
 			color = '#ff9109';
 			break;
 			case 4:
-			color = '#ff9109';
+			color = '#ff8109';
 			break;
 			case 5:
 			color = '#1dbc00';
 			break;
 			case 6:
-			color = '#1dbc00';
+			color = '#2eff08';
 		}
 
 		$.each(o, function (k, v) {
@@ -108,53 +141,12 @@ Validation.prototype = {
 			}
 		});
 
-		$(this.el).parents('.pwd-block').find('.pwd-strength-indicator').css({
-			'background-color': color
+		var progress = Math.round((score * 100)/6) === 0 ? 10 : Math.round((score * 100)/6);
+		el.parents('.pwd-block').find('.progress-bar').css({
+			'background-color': color,
+			'width': progress +'%'
 		}).text(msg);
 	}
 };
 
-var Password = {
-
-	showValidation: function () {
-		$('.pwd').on('keyup', function () {
-			var el = new Validation($('.pwd'), $('.pwd').val());
-			if (el.val !== '') {
-				el.validate();
-			}
-		});
-	},
-
-	showIndicator: function () {
-		$('.pwd').on('focusin', function () {
-			$(this).parents('.pwd-block').find('.pwd-strength-indicator').removeClass('hidden');
-		});
-
-		$('.pwd').on('focusout', function () {
-			if ($('.pwd').val() === '') {
-				$(this).parents('.pwd-block').find('.pwd-strength-indicator').addClass('hidden');
-				$(this).parents('.pwd-block').find('.pwd-strength-indicator').css({'background-color': '#ddd'}).text('');
-			}
-		});
-	},
-
-	showPassword: function () {
-		$('.show-pwd').on('click', function () {
-			if ($('.pwd').prop('type') === 'password') {
-				$('.pwd').prop('type', 'text');
-				$(this).text('Hide Password');
-			} else {
-				$('.pwd').prop('type', 'password');
-				$(this).text('Show Password');
-			}
-		});
-	},
-
-	init: function () {
-		this.showIndicator();
-		this.showValidation();
-		this.showPassword();
-	}
-};
-
-Password.init();
+var el = new Validation($('.pwd'));
